@@ -32,6 +32,7 @@ defmodule RealtimeToDoListing.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:bcrypt_elixir, "~> 3.0"},
       {:phoenix, "~> 1.7.6"},
       {:phoenix_ecto, "~> 4.4"},
       {:ecto_sql, "~> 3.10"},
@@ -46,6 +47,8 @@ defmodule RealtimeToDoListing.MixProject do
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.2"},
+      {:swoosh, "~> 1.4"},
+      {:hackney, "~> 1.9"},
       {:plug_cowboy, "~> 2.5"}
     ]
   end
