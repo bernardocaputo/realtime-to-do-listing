@@ -3,9 +3,22 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
 
   import Phoenix.LiveViewTest
   import RealtimeToDoListing.TasksFixtures
+  import RealtimeToDoListing.AccountsFixtures
 
-  @create_attrs %{completed: true, dead_line: "2023-09-25T11:42:00", description: "some description", priority: :low, title: "some title"}
-  @update_attrs %{completed: false, dead_line: "2023-09-26T11:42:00", description: "some updated description", priority: :medium, title: "some updated title"}
+  @create_attrs %{
+    completed: true,
+    dead_line: "2023-09-25T11:42:00",
+    description: "some description",
+    priority: :low,
+    title: "some title"
+  }
+  @update_attrs %{
+    completed: false,
+    dead_line: "2023-09-26T11:42:00",
+    description: "some updated description",
+    priority: :medium,
+    title: "some updated title"
+  }
   @invalid_attrs %{completed: false, dead_line: nil, description: nil, priority: nil, title: nil}
 
   defp create_task(_) do
@@ -13,18 +26,30 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
     %{task: task}
   end
 
-  describe "Index" do
-    setup [:create_task]
+  defp create_user(_) do
+    user = user_fixture()
+    %{user: user}
+  end
 
-    test "lists all tasks", %{conn: conn, task: task} do
-      {:ok, _index_live, html} = live(conn, ~p"/tasks")
+  describe "Index" do
+    setup [:create_task, :create_user]
+
+    test "user must be logged in", %{conn: conn} do
+      {:error,
+       {:redirect,
+        %{flash: %{"error" => "You must log in to access this page."}, to: "/users/log_in"}}} =
+        conn |> live(~p"/tasks")
+    end
+
+    test "lists all tasks", %{conn: conn, task: task, user: user} do
+      {:ok, _index_live, html} = conn |> log_in_user(user) |> live(~p"/tasks")
 
       assert html =~ "Listing Tasks"
       assert html =~ task.description
     end
 
-    test "saves new task", %{conn: conn} do
-      {:ok, index_live, _html} = live(conn, ~p"/tasks")
+    test "saves new task", %{conn: conn, user: user} do
+      {:ok, index_live, _html} = conn |> log_in_user(user) |> live(~p"/tasks")
 
       assert index_live |> element("a", "New Task") |> render_click() =~
                "New Task"
@@ -46,8 +71,8 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
       assert html =~ "some description"
     end
 
-    test "updates task in listing", %{conn: conn, task: task} do
-      {:ok, index_live, _html} = live(conn, ~p"/tasks")
+    test "updates task in listing", %{conn: conn, task: task, user: user} do
+      {:ok, index_live, _html} = conn |> log_in_user(user) |> live(~p"/tasks")
 
       assert index_live |> element("#tasks-#{task.id} a", "Edit") |> render_click() =~
                "Edit Task"
@@ -69,8 +94,8 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
       assert html =~ "some updated description"
     end
 
-    test "deletes task in listing", %{conn: conn, task: task} do
-      {:ok, index_live, _html} = live(conn, ~p"/tasks")
+    test "deletes task in listing", %{conn: conn, task: task, user: user} do
+      {:ok, index_live, _html} = conn |> log_in_user(user) |> live(~p"/tasks")
 
       assert index_live |> element("#tasks-#{task.id} a", "Delete") |> render_click()
       refute has_element?(index_live, "#tasks-#{task.id}")
@@ -78,17 +103,24 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
   end
 
   describe "Show" do
-    setup [:create_task]
+    setup [:create_task, :create_user]
 
-    test "displays task", %{conn: conn, task: task} do
-      {:ok, _show_live, html} = live(conn, ~p"/tasks/#{task}")
+    test "user must be logged in", %{conn: conn, task: task} do
+      {:error,
+       {:redirect,
+        %{flash: %{"error" => "You must log in to access this page."}, to: "/users/log_in"}}} =
+        conn |> live(~p"/tasks/#{task}")
+    end
+
+    test "displays task", %{conn: conn, task: task, user: user} do
+      {:ok, _show_live, html} = conn |> log_in_user(user) |> live(~p"/tasks/#{task}")
 
       assert html =~ "Show Task"
       assert html =~ task.description
     end
 
-    test "updates task within modal", %{conn: conn, task: task} do
-      {:ok, show_live, _html} = live(conn, ~p"/tasks/#{task}")
+    test "updates task within modal", %{conn: conn, task: task, user: user} do
+      {:ok, show_live, _html} = conn |> log_in_user(user) |> live(~p"/tasks/#{task}")
 
       assert show_live |> element("a", "Edit") |> render_click() =~
                "Edit Task"
