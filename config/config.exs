@@ -10,6 +10,8 @@ import Config
 config :realtime_to_do_listing,
   ecto_repos: [RealtimeToDoListing.Repo]
 
+config :realtime_to_do_listing, RealtimeToDoListing.Mailer, adapter: Swoosh.Adapters.Local
+
 # Configures the endpoint
 config :realtime_to_do_listing, RealtimeToDoListingWeb.Endpoint,
   url: [host: "localhost"],
