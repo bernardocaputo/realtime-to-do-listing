@@ -2,10 +2,12 @@ defmodule RealtimeToDoListingWeb.TaskLive.Show do
   use RealtimeToDoListingWeb, :live_view
 
   alias RealtimeToDoListing.Tasks
+  alias RealtimeToDoListing.Accounts
+  alias RealtimeToDoListing.Repo
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, socket}
+    {:ok, assign(socket, :users, Accounts.list_users())}
   end
 
   @impl true
@@ -13,7 +15,7 @@ defmodule RealtimeToDoListingWeb.TaskLive.Show do
     {:noreply,
      socket
      |> assign(:page_title, page_title(socket.assigns.live_action))
-     |> assign(:task, Tasks.get_task!(id))}
+     |> assign(:task, Repo.preload(Tasks.get_task!(id), :user))}
   end
 
   defp page_title(:show), do: "Show Task"
