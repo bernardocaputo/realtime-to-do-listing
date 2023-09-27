@@ -28,6 +28,19 @@ defmodule RealtimeToDoListingWeb.TaskLive.FormComponent do
           prompt="Choose a value"
           options={Ecto.Enum.values(RealtimeToDoListing.Tasks.Task, :priority)}
         />
+        <.input
+          type="text"
+          field={@form[:user_id]}
+          label="Assigned user"
+          placeholder="ex: user@email.com"
+          list="users"
+          autocomplete="off"
+        />
+        <datalist id="users">
+          <option :for={%{id: id, email: email} <- @users} value={id}>
+            <%= email %>
+          </option>
+        </datalist>
         <.input field={@form[:dead_line]} type="datetime-local" label="Dead line" />
         <.input field={@form[:completed]} type="checkbox" label="Completed" />
         <:actions>

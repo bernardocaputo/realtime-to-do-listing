@@ -7,12 +7,13 @@ defmodule RealtimeToDoListing.TasksTest do
     alias RealtimeToDoListing.Tasks.Task
 
     import RealtimeToDoListing.TasksFixtures
+    import RealtimeToDoListing.AccountsFixtures
 
     @invalid_attrs %{completed: nil, dead_line: nil, description: nil, priority: nil, title: nil}
 
     test "list_tasks/0 returns all tasks" do
       task = task_fixture()
-      assert Tasks.list_tasks() == [task]
+      assert Tasks.list_tasks() == [Repo.preload(task, :user)]
     end
 
     test "get_task!/1 returns the task with given id" do
@@ -21,7 +22,16 @@ defmodule RealtimeToDoListing.TasksTest do
     end
 
     test "create_task/1 with valid data creates a task" do
-      valid_attrs = %{completed: true, dead_line: ~N[2023-09-25 11:42:00], description: "some description", priority: :low, title: "some title"}
+      user = user_fixture()
+
+      valid_attrs = %{
+        completed: true,
+        user_id: user.id,
+        dead_line: ~N[2023-09-25 11:42:00],
+        description: "some description",
+        priority: :low,
+        title: "some title"
+      }
 
       assert {:ok, %Task{} = task} = Tasks.create_task(valid_attrs)
       assert task.completed == true
@@ -37,7 +47,14 @@ defmodule RealtimeToDoListing.TasksTest do
 
     test "update_task/2 with valid data updates the task" do
       task = task_fixture()
-      update_attrs = %{completed: false, dead_line: ~N[2023-09-26 11:42:00], description: "some updated description", priority: :medium, title: "some updated title"}
+
+      update_attrs = %{
+        completed: false,
+        dead_line: ~N[2023-09-26 11:42:00],
+        description: "some updated description",
+        priority: :medium,
+        title: "some updated title"
+      }
 
       assert {:ok, %Task{} = task} = Tasks.update_task(task, update_attrs)
       assert task.completed == false

@@ -6,6 +6,19 @@ defmodule RealtimeToDoListing.AccountsTest do
   import RealtimeToDoListing.AccountsFixtures
   alias RealtimeToDoListing.Accounts.{User, UserToken}
 
+  describe "list_users/0" do
+    test "return empty when users do not exist" do
+      assert Enum.empty?(Accounts.list_users())
+    end
+
+    test "returns all users if the email exists" do
+      user = user_fixture()
+      user2 = user_fixture()
+
+      assert [user, user2] == Accounts.list_users()
+    end
+  end
+
   describe "get_user_by_email/1" do
     test "does not return the user if the email does not exist" do
       refute Accounts.get_user_by_email("unknown@example.com")

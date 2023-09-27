@@ -13,6 +13,7 @@
   <:item title="Description"><%= @task.description %></:item>
   <:item title="Priority"><%= @task.priority %></:item>
   <:item title="Dead line"><%= @task.dead_line %></:item>
+  <:item title="Assigned User"><%= @task.user.email %></:item>
   <:item title="Completed"><%= @task.completed %></:item>
 </.list>
 
@@ -25,6 +26,7 @@
     title={@page_title}
     action={@live_action}
     task={@task}
+    users={@users}
     patch={~p"/tasks/#{@task}"}
   />
 </.modal>
