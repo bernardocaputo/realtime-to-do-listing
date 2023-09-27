@@ -8,6 +8,10 @@ defmodule RealtimeToDoListingWeb.TaskLive.Index do
 
   @impl true
   def mount(_params, _session, socket) do
+    if connected?(socket) do
+      Tasks.subscribe()
+    end
+
     socket =
       socket
       |> assign(:users, Accounts.list_users())
@@ -42,6 +46,18 @@ defmodule RealtimeToDoListingWeb.TaskLive.Index do
   @impl true
   def handle_info({RealtimeToDoListingWeb.TaskLive.FormComponent, {:saved, task}}, socket) do
     {:noreply, stream_insert(socket, :tasks, Repo.preload(task, :user))}
+  end
+
+  def handle_info({:task_created, task}, socket) do
+    {:noreply, stream_insert(socket, :tasks, task, at: 0)}
+  end
+
+  def handle_info({:task_updated, task}, socket) do
+    {:noreply, stream_insert(socket, :tasks, task)}
+  end
+
+  def handle_info({:task_deleted, task}, socket) do
+    {:noreply, stream_delete(socket, :tasks, task)}
   end
 
   @impl true

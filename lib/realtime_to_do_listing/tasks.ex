@@ -9,6 +9,20 @@ defmodule RealtimeToDoListing.Tasks do
   alias RealtimeToDoListing.Tasks.Task
 
   @doc """
+  Subscribes to a topic
+  """
+  def subscribe do
+    Phoenix.PubSub.subscribe(RealtimeToDoListing.PubSub, "tasks")
+  end
+
+  @doc """
+  Broadcasts message
+  """
+  def broadcast(message) do
+    Phoenix.PubSub.broadcast(RealtimeToDoListing.PubSub, "tasks", message)
+  end
+
+  @doc """
   Returns the list of tasks.
 
   ## Examples
@@ -52,9 +66,13 @@ defmodule RealtimeToDoListing.Tasks do
 
   """
   def create_task(attrs \\ %{}) do
-    %Task{}
-    |> Task.changeset(attrs)
-    |> Repo.insert()
+    with {:ok, task} <-
+           %Task{}
+           |> Task.changeset(attrs)
+           |> Repo.insert() do
+      broadcast({:task_created, Repo.preload(task, :user)})
+      {:ok, task}
+    end
   end
 
   @doc """
@@ -70,9 +88,13 @@ defmodule RealtimeToDoListing.Tasks do
 
   """
   def update_task(%Task{} = task, attrs) do
-    task
-    |> Task.changeset(attrs)
-    |> Repo.update()
+    with {:ok, task} <-
+           task
+           |> Task.changeset(attrs)
+           |> Repo.update() do
+      broadcast({:task_updated, Repo.preload(task, :user)})
+      {:ok, task}
+    end
   end
 
   @doc """
@@ -88,7 +110,10 @@ defmodule RealtimeToDoListing.Tasks do
 
   """
   def delete_task(%Task{} = task) do
-    Repo.delete(task)
+    with {:ok, deleted_task} <- Repo.delete(task) do
+      broadcast({:task_deleted, deleted_task})
+      {:ok, deleted_task}
+    end
   end
 
   @doc """
