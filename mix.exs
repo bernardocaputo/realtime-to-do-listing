@@ -49,6 +49,7 @@ defmodule RealtimeToDoListing.MixProject do
       {:jason, "~> 1.2"},
       {:swoosh, "~> 1.4"},
       {:hackney, "~> 1.9"},
+      {:mix_test_watch, "~> 1.1"},
       {:plug_cowboy, "~> 2.5"}
     ]
   end

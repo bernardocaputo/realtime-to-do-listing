@@ -1,6 +1,8 @@
 defmodule RealtimeToDoListingWeb.TaskLiveTest do
   use RealtimeToDoListingWeb.ConnCase
 
+  alias RealtimeToDoListing.Repo
+
   import Phoenix.LiveViewTest
   import RealtimeToDoListing.TasksFixtures
   import RealtimeToDoListing.AccountsFixtures
@@ -22,17 +24,13 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
   @invalid_attrs %{completed: false, dead_line: nil, description: nil, priority: nil, title: nil}
 
   defp create_task(_) do
-    task = task_fixture()
+    task = task_fixture() |> Repo.preload(:user)
+
     %{task: task}
   end
 
-  defp create_user(_) do
-    user = user_fixture()
-    %{user: user}
-  end
-
   describe "Index" do
-    setup [:create_task, :create_user]
+    setup [:create_task]
 
     test "user must be logged in", %{conn: conn} do
       {:error,
@@ -41,15 +39,15 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
         conn |> live(~p"/tasks")
     end
 
-    test "lists all tasks", %{conn: conn, task: task, user: user} do
-      {:ok, _index_live, html} = conn |> log_in_user(user) |> live(~p"/tasks")
+    test "lists all tasks", %{conn: conn, task: task} do
+      {:ok, _index_live, html} = conn |> log_in_user(task.user) |> live(~p"/tasks")
 
       assert html =~ "Listing Tasks"
       assert html =~ task.description
     end
 
-    test "saves new task", %{conn: conn, user: user} do
-      {:ok, index_live, _html} = conn |> log_in_user(user) |> live(~p"/tasks")
+    test "saves new task", %{conn: conn, task: task} do
+      {:ok, index_live, _html} = conn |> log_in_user(task.user) |> live(~p"/tasks")
 
       assert index_live |> element("a", "New Task") |> render_click() =~
                "New Task"
@@ -61,7 +59,7 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
              |> render_change() =~ "can&#39;t be blank"
 
       assert index_live
-             |> form("#task-form", task: @create_attrs)
+             |> form("#task-form", task: Map.put(@create_attrs, :user_id, task.user_id))
              |> render_submit()
 
       assert_patch(index_live, ~p"/tasks")
@@ -71,8 +69,8 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
       assert html =~ "some description"
     end
 
-    test "updates task in listing", %{conn: conn, task: task, user: user} do
-      {:ok, index_live, _html} = conn |> log_in_user(user) |> live(~p"/tasks")
+    test "updates task in listing", %{conn: conn, task: task} do
+      {:ok, index_live, _html} = conn |> log_in_user(task.user) |> live(~p"/tasks")
 
       assert index_live |> element("#tasks-#{task.id} a", "Edit") |> render_click() =~
                "Edit Task"
@@ -83,8 +81,10 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
              |> form("#task-form", task: @invalid_attrs)
              |> render_change() =~ "can&#39;t be blank"
 
+      new_user = user_fixture()
+
       assert index_live
-             |> form("#task-form", task: @update_attrs)
+             |> form("#task-form", task: Map.put(@update_attrs, :user_id, new_user.id))
              |> render_submit()
 
       assert_patch(index_live, ~p"/tasks")
@@ -94,8 +94,8 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
       assert html =~ "some updated description"
     end
 
-    test "deletes task in listing", %{conn: conn, task: task, user: user} do
-      {:ok, index_live, _html} = conn |> log_in_user(user) |> live(~p"/tasks")
+    test "deletes task in listing", %{conn: conn, task: task} do
+      {:ok, index_live, _html} = conn |> log_in_user(task.user) |> live(~p"/tasks")
 
       assert index_live |> element("#tasks-#{task.id} a", "Delete") |> render_click()
       refute has_element?(index_live, "#tasks-#{task.id}")
@@ -103,7 +103,7 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
   end
 
   describe "Show" do
-    setup [:create_task, :create_user]
+    setup [:create_task]
 
     test "user must be logged in", %{conn: conn, task: task} do
       {:error,
@@ -112,15 +112,15 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
         conn |> live(~p"/tasks/#{task}")
     end
 
-    test "displays task", %{conn: conn, task: task, user: user} do
-      {:ok, _show_live, html} = conn |> log_in_user(user) |> live(~p"/tasks/#{task}")
+    test "displays task", %{conn: conn, task: task} do
+      {:ok, _show_live, html} = conn |> log_in_user(task.user) |> live(~p"/tasks/#{task}")
 
       assert html =~ "Show Task"
       assert html =~ task.description
     end
 
-    test "updates task within modal", %{conn: conn, task: task, user: user} do
-      {:ok, show_live, _html} = conn |> log_in_user(user) |> live(~p"/tasks/#{task}")
+    test "updates task within modal", %{conn: conn, task: task} do
+      {:ok, show_live, _html} = conn |> log_in_user(task.user) |> live(~p"/tasks/#{task}")
 
       assert show_live |> element("a", "Edit") |> render_click() =~
                "Edit Task"
@@ -131,8 +131,10 @@ defmodule RealtimeToDoListingWeb.TaskLiveTest do
              |> form("#task-form", task: @invalid_attrs)
              |> render_change() =~ "can&#39;t be blank"
 
+      new_user = user_fixture()
+
       assert show_live
-             |> form("#task-form", task: @update_attrs)
+             |> form("#task-form", task: Map.put(@update_attrs, :user_id, new_user.id))
              |> render_submit()
 
       assert_patch(show_live, ~p"/tasks/#{task}")
